@@ -11,15 +11,6 @@ int MSB;  // initialise MSB pour bit de poids forts
 int LSB;  // initialise LSB bit de poid faible
 signed int milli_amps;
 
-/* 
-// mesure de courant [ampéremetre;Afficheur]
-[500;389]
-[1000;844]
-[1390;1210]
-[2000;1778]
-[2500;2234]
-*/
-
 void setup() {
   Serial.begin(9600);                    // initialisation de la liaison série
   SPI.begin();                           // initialisation du port SPI
@@ -38,10 +29,11 @@ void loop() {
   digitalWrite(CS, HIGH);                                     // désactivation de la ligne CS
   milli_amps = (1000 / 89.95) * (((MSB << 8) | LSB) - 2048);  // formule de la datasheet * la valeur de correction
   
-  tension = analogRead(Tension);  // on enregistre le valuer lu sur le pin A0 dans tension
+    // on enregistre le valuer lu sur le pin A0 dans tension
   affiche_text("Ipv:", 0, 0, 1);
   affiche_variable(milli_amps, 4, 0);
-
+  
+tension = analogRead(Tension);
   affiche_text("Upv:", 0, 1, 0);
   affiche_variable((tension * 0.0048) / 0.227, 4, 1);
   delay(1000);

@@ -1,11 +1,9 @@
 #include <Wire.h>
 #include "rgb_lcd.h"
 
-
-
 rgb_lcd lcd;
 int Tension = A0;
-int In;
+int In=12;
 int Courant= 6;
 
 void setup() {
@@ -15,10 +13,9 @@ lcd.begin(16,2);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
- In = (analogRead(Tension))*0.005;
+
  aff_I(In,Courant);
- delay(100);
+ delay(1000);
 }
 
 
@@ -32,4 +29,5 @@ lcd.setCursor(0,1);
 lcd.print("Ipv:");
 lcd.setCursor(4,1);
 lcd.print(courant);
+Serial.println("test sur fritzing");
 }

@@ -9,10 +9,12 @@ int MSB;  // initialise MSB pour bit de poids forts
 int LSB;  // initialise LSB bit de poid faible
 int Tension = A0;
 int tension;
-float courant;
+float courantPre = 0;
+float courantiInst;
 float pInst =0;
 float pPrec =0;
 int PWM =50;
+int time = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -27,32 +29,42 @@ void setup() {
 }
 
 void loop() {
-  courant = Courant(); //lecture du courant
+
+  courantiInst = Courant(); //lecture du courant
   tension = ((analogRead(Tension)) * 0.0048) / 0.227;
 
-  affiche_text("Ipv:", 0, 0, 1);
-  affiche_variable(courant, 4, 0);
+  MPPT( courantiInst, tension,&pInst, &PWM); //recherche du point MPPT
 
+  OCR2B = (OCR2A / 100.0) *PWM; //modification du PWM de sortie
+
+  Affiche();
+
+
+
+
+
+/*  affiche_text("Ipv:", 0, 0, 1);
+  affiche_variable(courantiInst, 4, 0);
   affiche_text("Upv:", 0, 1, 0);
   affiche_variable(tension, 4, 1);
-  
-  MPPT(tension, courant, &pInst, &pPrec, &PWM); //recherche du point MPPT
-  OCR2B = (OCR2A / 100.0) *PWM; //modification du PWM de sortie
-  delay(3000);
+  delay(1000);
 
-  affiche_text("Ppv:", 0, 0, 1);
+  affiche_text("Ppv:", 0, 0, 0);
   affiche_variable(pPrec, 4, 0);
-  delay(3000);
+  delay(1000); */
+  
 }
 
 float Courant(){
-  signed int milli_amps;
+  float milli_amps;
   digitalWrite(CS, LOW);                                      // activation de la ligne CS
   MSB = SPI.transfer(0x00);                                   // récupération des bit de poids forts
   LSB = SPI.transfer(0x00);                                   // récupération des bit de poids faibles
   digitalWrite(CS, HIGH);                                     // désactivation de la ligne CS
-  milli_amps = ((1000 / 89.95) * (((MSB << 8) | LSB) - 2048))/1000;  // formule de la datasheet * la valeur de correction
-  
+  milli_amps = ((1000 / 89.95) * (((MSB << 8) | LSB) - 2048))/1000.0;  // formule de la datasheet * la valeur de correction
+  if(milli_amps < 0)
+    milli_amps = -milli_amps;
+
   return milli_amps;
 }
 
@@ -67,25 +79,46 @@ void initTimer2(){
   sei();       // Active l'interruption globale
 }
 
-void MPPT(float tension, float courant, float *pInst, float *pPrec, int *PWM){
-  *pInst  = tension * courant;  //calcul de la puissance instantannee
-
-  if (*pInst > *pPrec){
+void MPPT(float courantiInst , int tension , float *pInst, int *PWM){
+   float pPrec;
+  *pInst  = tension * courantiInst;  //calcul de la puissance instantannee
+/*  if (courantiInst > courantPre){
     //augmentation du PWM
     *PWM = *PWM + 1;
     if(*PWM > 90){
       *PWM = 90;
     }
   }
-  else  //diminution du PWM
+  else if (courantiInst < courantPre) //diminution du PWM
   {
     *PWM = *PWM - 1;
     if(*PWM < 10){
       *PWM = 10;
     } 
   }
+  else
+  *PWM = *PWM;
+*/
 
-  *pPrec = *pInst;  //mise a jour de la puissance precedente
+  if (*pInst > pPrec){ //augmentation du PWM
+    *PWM = *PWM + 1;
+    if(*PWM > 90){
+      *PWM = 90;
+    }
+  }
+  else if (*pInst < pPrec) //diminution du PWM
+  {
+    *PWM = *PWM - 1;
+    if(*PWM < 10){
+      *PWM = 10;
+    } 
+  }
+  else
+  *PWM = *PWM; //pas de changement
+
+  pPrec = *pInst;  //mise a jour de la puissance precedente
+  courantPre = courantiInst; //mise a jour du courant
+  
 }
 
 void affiche_text(const char *texte, int curseur, int ligne, int clear) {
@@ -98,4 +131,19 @@ void affiche_text(const char *texte, int curseur, int ligne, int clear) {
 void affiche_variable(float variable, int curseur, int ligne) {                                               // on efface ce qui est récrit sur l'afficheur
   lcd.setCursor(curseur, ligne);                                                                              // on décale le curseur de 5cases pour afficher la tension
   lcd.print(variable);
+}
+
+void Affiche(){
+
+  cli();
+  affiche_text("Ipv:", 0, 0, 1);
+  affiche_variable(courantiInst, 4, 0);
+  affiche_text("Upv:", 0, 1, 0);
+  affiche_variable(tension, 4, 1);
+  delay(1000);
+
+  affiche_text("Ppv:", 0, 0, 0);
+  affiche_variable(pPrec, 4, 0);
+  delay(1000);
+  sei();
 }

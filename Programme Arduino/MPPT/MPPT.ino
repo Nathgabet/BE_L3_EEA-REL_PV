@@ -4,7 +4,7 @@ float courant =0;
 float pInst =0;
 float pPrec =0;
 
-int PWM =10;
+int PWM =50;
 
 void setup() {
   initTimer2(); //initialisation du timer2

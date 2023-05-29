@@ -5,13 +5,16 @@
 int PWM = 1;
 
 void setup() {
+
+  
   pinMode(3, OUTPUT);   // sortie Timer B
-  cli();                // Désactive l'interruption globale
+
   TCCR2A = 0b00100011;  //00=> OCOA deconnecter(COM2A1:0), 10=> sortie OCOB non inverseuse(COM2B1:0), 00=> reserver, 11=> Fast PWM(WGM01:00)
   TCCR2B = 0b00001010;  //00=> utiliser pour mode non pwm (FOC2A:FOC2B), 00=> reserver, 1=> Fast PWM(WGM02), 010=> diviseur de 8 pour la clock (CS00:01:02)
 
-  OCR2A = 38;  //valeur max du comparateur
-  OCR2B = 15;  //valeur a comparer (duty cycle 0 to OCR2A)
+  OCR2A = 38;           //valeur max du comparateur
+  OCR2B = 15;           //valeur a comparer (duty cycle 0 to OCR2A)
+  
   sei();       // Active l'interruption globale
 
   Serial.begin(9600);
